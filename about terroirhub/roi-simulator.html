@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROI シミュレーター - TerroirHub SakeLink</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5f7f 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .simulator-container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .simulator-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .simulator-title {
+            font-size: 2.2rem;
+            color: #1e3a5f;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .simulator-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: #f8fafb;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4a90e2;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 30px 0;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(74, 144, 226, 0.3);
+        }
+
+        .results-container {
+            background: linear-gradient(135deg, #f8fafb, #e8f4f8);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-container.show {
+            display: block;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(30, 58, 95, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-size: 1.1rem;
+            color: #1e3a5f;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c5f7f;
+        }
+
+        .result-value.highlight {
+            font-size: 1.8rem;
+            color: #e74c3c;
+        }
+
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #1e3a5f;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: end;
+            height: 200px;
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, #4a90e2, #74b9ff);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: all 0.8s ease;
+            min-height: 20px;
+        }
+
+        .bar.improved {
+            background: linear-gradient(to top, #e74c3c, #fd79a8);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #1e3a5f;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .email-form {
+            background: #1e3a5f;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .email-form h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .email-input {
+            width: 70%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+
+        .email-btn {
+            width: 28%;
+            padding: 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .email-btn:hover {
+            background: #c0392b;
+        }
+
+        .disclaimer {
+            font-size: 0.9rem;
+            color: #888;
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .simulator-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+
+            .simulator-title {
+                font-size: 1.8rem;
+            }
+
+            .email-input {
+                width: 100%;
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+
+            .email-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator-container">
+        <div class="simulator-header">
+            <h1 class="simulator-title">30秒で効果シミュレーション</h1>
+            <p class="simulator-subtitle">貴蔵の数値を入力して、SakeLinkでの売上向上効果を確認してください</p>
+        </div>
+
+        <form id="roiForm">
+            <div class="input-group">
+                <label class="input-label" for="visitors">年間訪問者数（人）</label>
+                <input type="number" class="input-field" id="visitors" placeholder="例: 5000" min="0" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="avgPrice">平均客単価（円）</label>
+                <input type="number" class="input-field" id="avgPrice" placeholder="例: 3000" min="0" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="events">試飲会・展示会出展回数（回/年）</label>
+                <input type="number" class="input-field" id="events" placeholder="例: 12" min="0" required>
+            </div>
+
+            <button type="submit" class="calculate-btn">💰 売上向上効果を計算する</button>
+        </form>
+
+        <div id="results" class="results-container">
+            <div class="chart-container">
+                <h3 class="chart-title">売上比較</h3>
+                <div class="bar-chart">
+                    <div class="bar" id="currentBar">
+                        <div class="bar-label">現在の売上</div>
+                        <div class="bar-value" id="currentValue">¥0</div>
+                    </div>
+                    <div class="bar improved" id="improvedBar">
+                        <div class="bar-label">SakeLink導入後</div>
+                        <div class="bar-value" id="improvedValue">¥0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">現在の推定年間売上</span>
+                <span class="result-value" id="currentSales">¥0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">SakeLink導入後の年間売上</span>
+                <span class="result-value" id="improvedSales">¥0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">年間売上向上額</span>
+                <span class="result-value highlight" id="improvement">¥0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">投資回収期間（ROI）</span>
+                <span class="result-value" id="roi">0ヶ月</span>
+            </div>
+
+            <div class="email-form">
+                <h3>📊 詳細レポートをPDFで受け取る</h3>
+                <input type="email" class="email-input" placeholder="メールアドレスを入力" required>
+                <button type="button" class="email-btn">無料で受け取る</button>
+            </div>
+        </div>
+
+        <p class="disclaimer">
+            ※ 算出ロジック：インバウンド酒販白書2025平均単価 × 当社 PoC 増加率（18〜30%）<br>
+            ※ 実際の効果は導入範囲・業態により変動します
+        </p>
+    </div>
+
+    <script src="roi-calculator.js"></script>
+</body>
+</html>
